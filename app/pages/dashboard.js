@@ -1,6 +1,4 @@
-
-import newConvModal from "../components/newConvModal";
-import newContModal from "../components/newContModal";
+import ToolTipMenu from "../components/ToolTipMenu";
 import { useContacts } from "../contacts/contacts";
 import { useEffect, useRef, useState, useMemo } from "react";
 import { useConversation } from "../contacts/conversationProvider";
@@ -17,10 +15,12 @@ export default function dashboard() {
   const { contacts = [], createContact } = useContacts();
   const conversationsOpen = activeKey === CONVERSATION_KEY;
   const [selectedCont, selectContact] = useState(null);
-  const { conversations, createConversation, addMessageToConversation } = useConversation();
+  const { conversations, createConversation, addMessageToConversation } =
+    useConversation();
 
   const [message, setMessage] = useState("");
   const [socket, setSocket] = useState(null);
+  const username = localStorage.getItem("username");
 
   const selectedConversation = useMemo(() => {
     return conversations.find((conv) =>
@@ -57,10 +57,14 @@ export default function dashboard() {
 
     if (selectedCont === "chatgpt") {
       addMessageToConversation(selectedCont, message, "you");
-      const conversationHistory = selectedConversation?.messages?.map((msg) => ({
-        role: msg.sender === "you" ? "user" : "assistant",
-        content: typeof msg.message === "string" ? msg.message : JSON.stringify(msg.message),
-      })) || [];
+      const conversationHistory =
+        selectedConversation?.messages?.map((msg) => ({
+          role: msg.sender === "you" ? "user" : "assistant",
+          content:
+            typeof msg.message === "string"
+              ? msg.message
+              : JSON.stringify(msg.message),
+        })) || [];
 
       setTimeout(() => {
         fetch("http://localhost:5000/api/chatbot", {
@@ -115,7 +119,7 @@ export default function dashboard() {
     return () => socketIo.disconnect();
   }, [id]);
 
-    useEffect(() => {
+  useEffect(() => {
     console.log("Selected Contact updated:", selectedCont);
     console.log("Conv: " + selectedConversation);
   }, [selectedCont, selectedConversation]);
@@ -126,7 +130,12 @@ export default function dashboard() {
         {/* Sidebar */}
         <aside className="w-1/4 bg-gray-900 text-white flex flex-col">
           <div className="flex items-center justify-between px-4 py-3 border-b border-gray-700">
-            <h1 className="text-lg font-bold">Chats</h1>
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 bg-gray-700 rounded-full">
+                {ToolTipMenu({ id: id, username: username })}
+              </div>
+              <h1 className="text-lg font-bold">Chats</h1>
+            </div>
             <button
               className="text-gray-400 hover:text-white"
               onClick={() => setModalOpen(true)}
@@ -134,23 +143,40 @@ export default function dashboard() {
               +
             </button>
           </div>
+
           <div className="flex-1 overflow-y-auto">
             {/* Chat List */}
-            {contacts.map((contact) => (
-              <div
-                key={contact.id}
-                onClick={() => selectContact(contact.id)}
-                className="flex items-center p-3 hover:bg-gray-800 cursor-pointer"
-              >
-                <div className="w-10 h-10 bg-gray-700 rounded-full mr-3"></div>
-                <div className="flex-1">
-                  <h3 className="text-sm font-medium">{contact.name}</h3>
-                  <p className="text-xs text-gray-400 truncate">
-                    Last message preview...
-                  </p>
+            {contacts.map((contact) => {
+              const conversation = conversations.find((conv) =>
+                conv.recipients.some((recipient) => recipient.id === contact.id)
+              );
+
+              const lastMessage =
+                conversation?.messages?.[conversation.messages.length - 1];
+              const lastMessagePreview = lastMessage
+                ? `${lastMessage.sender === "you" ? "You: " : ""}${
+                    lastMessage.message
+                  }`
+                : "No messages yet";
+
+              return (
+                <div
+                  key={contact.id}
+                  onClick={() => selectContact(contact.id)}
+                  className={`flex items-center p-3 hover:bg-gray-800 cursor-pointer ${
+                    selectedCont === contact.id ? "bg-gray-800" : ""
+                  }`}
+                >
+                  <div className="w-10 h-10 bg-gray-700 rounded-full mr-3"></div>
+                  <div className="flex-1">
+                    <h3 className="text-sm font-medium">{contact.name}</h3>
+                    <p className="text-xs text-gray-400 truncate">
+                      {lastMessagePreview}
+                    </p>
+                  </div>
                 </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         </aside>
 
@@ -168,7 +194,9 @@ export default function dashboard() {
             {selectedConversation?.messages?.map((msg, index) => (
               <div
                 key={index}
-                className={`mb-4 ${msg.sender === "you" ? "text-right" : "text-left"}`}
+                className={`mb-4 ${
+                  msg.sender === "you" ? "text-right" : "text-left"
+                }`}
               >
                 <div
                   className={`inline-block p-3 rounded-lg ${
@@ -184,27 +212,29 @@ export default function dashboard() {
           </div>
 
           {/* Message Input */}
-          <div className="flex items-center px-4 py-3 border-t bg-gray-50">
-            <input
-              type="text"
-              value={message}
-              className="flex-1 px-3 py-2 border rounded-lg outline-none"
-              placeholder="Type a message..."
-              onChange={(e) => setMessage(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === "Enter" && e.target.value.trim()) {
-                  handleSendMessage(e.target.value);
-                  setMessage("");
-                }
-              }}
-            />
-            <button
-              className="ml-2 px-3 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600"
-              onClick={() => handleSendMessage(message)}
-            >
-              Send
-            </button>
-          </div>
+          {selectedConversation && (
+            <div className="flex items-center px-4 py-3 border-t bg-gray-50">
+              <input
+                type="text"
+                value={message}
+                className="flex-1 px-3 py-2 border rounded-lg outline-none"
+                placeholder="Type a message..."
+                onChange={(e) => setMessage(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" && e.target.value.trim()) {
+                    handleSendMessage(e.target.value);
+                    setMessage("");
+                  }
+                }}
+              />
+              <button
+                className="ml-2 px-3 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600"
+                onClick={() => handleSendMessage(message)}
+              >
+                Send
+              </button>
+            </div>
+          )}
         </main>
 
         {/* Modal */}

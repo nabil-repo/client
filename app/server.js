@@ -1,10 +1,13 @@
+require("dotenv").config();
 const express = require("express");
 const http = require("http");
 const mongoose = require("mongoose");
 const socketIo = require("socket.io");
 const cors = require("cors");
-const authRoutes = require("../app/routes/auth");
+//const authRoutes = require("../app/routes/auth");
 const OpenAI = require("openai");
+const bodyParser = require("body-parser");
+const bcrypt = require("bcrypt");
 
 const app = express();
 const server = http.createServer(app);
@@ -19,38 +22,14 @@ const io = socketIo(server, {
 // Middleware
 app.use(cors());
 app.use(express.json());
+app.use(bodyParser.json());
 
 const openai = new OpenAI({
-  apiKey:
-    "pk-wJYNiXMGSFZNVIUTgmQzpYvnGmrLHmrrZFoDpJMMUzudfSWz",
-    baseURL:' https://api.pawan.krd/cosmosrp/v1'
+  apiKey: "pk-wJYNiXMGSFZNVIUTgmQzpYvnGmrLHmrrZFoDpJMMUzudfSWz",
+  baseURL: " https://api.pawan.krd/cosmosrp/v1",
 });
 
-// MongoDB connection
-// mongoose.connect("mongodb+srv://nabilaaaman:nabilaman@cluster0.wydqa.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0", {
 
-// })
-// .then(() => console.log('MongoDB connected'))
-// .catch(err => console.error('MongoDB connection error:', err));
-
-// Socket.IO for real-time communication
-// io.on("connection", (socket) => {
-//   const id = socket.handshake.query.id;
-//   socket.join(id);
-
-//   socket.on("send-msg", ({ recipients, text }) => {
-//     recipients.forEach((recipient) => {
-//       const newRecipents = recipients.filter((r) => r !== recipient);
-//       newRecipents.push(id);
-//       socket.broadcast.to(recipient).emit("recive-message", {
-//         recipients: newRecipents,
-//         sender: id,
-//         text,
-//       });
-//       console.log(recipient+": "+text)
-//     });
-//   });
-// });
 
 io.on("connection", (socket) => {
   const id = socket.handshake.query.id;
@@ -73,31 +52,109 @@ io.on("connection", (socket) => {
   });
 });
 
-// Auth routes
-app.use("/api/auth", authRoutes);
-
-const PORT = process.env.PORT || 5000;
-server.listen(PORT, () =>
-  console.log(`Server running on http://localhost:${PORT}`)
-);
-
 app.post("/api/chatbot", async (req, res) => {
-  const { message, history } = req.body; // History can help maintain conversation context
-  console.log("gpt: "+message)
+  const { message, history } = req.body;
+  console.log("gpt: " + message);
   try {
     const response = await openai.chat.completions.create({
-      model: "gpt-3.5-turbo", // Use "gpt-4" if available
+      model: "gpt-3.5-turbo",
       messages: [
         { role: "system", content: "You are a helpful assistant." },
-        ...history, // Include previous messages in the conversation
+        ...history,
         { role: "user", content: message },
       ],
     });
 
-    const reply = response.choices[0].message.content;  
+    const reply = response.choices[0].message.content;
     res.json({ response: reply });
   } catch (error) {
     console.error("Error communicating with ChatGPT:", error);
     res.status(500).json({ error: "Failed to fetch ChatGPT response" });
   }
 });
+
+//Mongo
+
+mongoose
+  .connect(
+    "mongodb+srv://nabilaaaman:nabilaman@cluster0.wydqa.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0",
+    { useNewUrlParser: true, useUnifiedTopology: true }
+  )
+  .then(() => console.log("MongoDB connected"))
+  .catch((err) => console.error(err));
+
+// User schema and model
+const userSchema = new mongoose.Schema({
+  id: { type: String, required: true, unique: true },
+  username: { type: String, required: true },
+  password: { type: String, required: true },
+});
+
+const User = mongoose.models.User || mongoose.model("User", userSchema);
+
+//create user
+app.post("/api/users/create", async (req, res) => {
+  const { id, username, password } = req.body;
+
+  if (!id || !username || !password) {
+    return res
+      .status(400)
+      .json({ error: "ID, Name, and Password are required" });
+  }
+
+  try {
+    const existingUser = await User.findOne({ id });
+    if (existingUser) {
+      return res
+        .status(400)
+        .json({ error: "User with this ID already exists" });
+    }
+
+    const hashedPassword = await bcrypt.hash(password, 10); 
+    const newUser = new User({ id, username, password: hashedPassword });
+    await newUser.save();
+
+    res.status(201).json({ message: "User created successfully" });
+  } catch (error) {
+    res.status(500).json({ error: "Error creating user: " + error.message });
+    console.log(error);
+  }
+});
+
+// API to validate a user
+app.post("/api/users/validate", async (req, res) => {
+  const { username, password } = req.body;
+
+  if (!username || !password) {
+    return res
+      .status(400)
+      .json({ error: "Username and Password are required" });
+  }
+
+  try {
+    // Find the user by username (not id)
+    const user = await User.findOne({ username });
+
+    if (user) {
+      const isPasswordValid = await bcrypt.compare(password, user.password);
+
+      if (isPasswordValid) {
+        return res.status(200).json({ message: "User validated", user });
+      } else {
+        return res.status(401).json({ error: "Invalid password" });
+      }
+    } else {
+      return res.status(404).json({ error: "User not found" });
+    }
+  } catch (error) {
+    res.status(500).json({ error: "Error validating user: " + error.message });
+  }
+});
+
+// // Auth routes
+// app.use("/api/auth", authRoutes);
+
+const PORT = process.env.PORT || 5000;
+server.listen(PORT, () =>
+  console.log(`Server running on http://localhost:${PORT}`)
+);
