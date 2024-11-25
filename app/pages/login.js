@@ -1,11 +1,7 @@
-
-
 import { useRef, useState } from "react";
 import axios from "axios";
 import { v4 as uuid } from "uuid";
 import useLocalStore from "../hooks/localstore";
-
-const API_URL = process.env.ENDPOINT;
 
 export default function Login({ onIdSubmit }) {
   const idRef = useRef();
@@ -15,6 +11,9 @@ export default function Login({ onIdSubmit }) {
   const [modalMessage, setModalMessage] = useState("");
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
+  const dotenv = require("dotenv");
+
+  const API_URL = "https://chattingapp-bice.vercel.app";
 
   const openModal = (type, message = "") => {
     setModalType(type);
@@ -37,6 +36,7 @@ export default function Login({ onIdSubmit }) {
       openModal("error", "Please enter both username and password.");
       return;
     }
+    console.log(API_URL)
 
     try {
       const response = await axios.post(API_URL + "/api/users/validate", {
@@ -71,7 +71,7 @@ export default function Login({ onIdSubmit }) {
     const id = uuid();
 
     try {
-      await axios.post(API_URL+"/api/users/create", {
+      await axios.post(API_URL + "/api/users/create", {
         id,
         username,
         password,
