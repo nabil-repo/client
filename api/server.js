@@ -14,7 +14,7 @@ const app = express();
 const server = http.createServer(app);
 
 
-const endpoint = process.env.ENDPONIT;
+const endpoint = process.env.ENDPOINT;
 
 const io = socketIo(server, {
   cors: {
