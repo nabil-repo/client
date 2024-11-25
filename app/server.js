@@ -4,7 +4,6 @@ const http = require("http");
 const mongoose = require("mongoose");
 const socketIo = require("socket.io");
 const cors = require("cors");
-//const authRoutes = require("../app/routes/auth");
 const OpenAI = require("openai");
 const bodyParser = require("body-parser");
 const bcrypt = require("bcrypt");
@@ -28,8 +27,6 @@ const openai = new OpenAI({
   apiKey: "pk-wJYNiXMGSFZNVIUTgmQzpYvnGmrLHmrrZFoDpJMMUzudfSWz",
   baseURL: " https://api.pawan.krd/cosmosrp/v1",
 });
-
-
 
 io.on("connection", (socket) => {
   const id = socket.handshake.query.id;
@@ -110,7 +107,7 @@ app.post("/api/users/create", async (req, res) => {
         .json({ error: "User with this ID already exists" });
     }
 
-    const hashedPassword = await bcrypt.hash(password, 10); 
+    const hashedPassword = await bcrypt.hash(password, 10);
     const newUser = new User({ id, username, password: hashedPassword });
     await newUser.save();
 
@@ -150,9 +147,6 @@ app.post("/api/users/validate", async (req, res) => {
     res.status(500).json({ error: "Error validating user: " + error.message });
   }
 });
-
-// // Auth routes
-// app.use("/api/auth", authRoutes);
 
 const PORT = process.env.PORT || 5000;
 server.listen(PORT, () =>

@@ -2,25 +2,49 @@ import ToolTipMenu from "../components/ToolTipMenu";
 import { useContacts } from "../contacts/contacts";
 import { useEffect, useRef, useState, useMemo } from "react";
 import { useConversation } from "../contacts/conversationProvider";
+import Image from "next/image";
 import io from "socket.io-client";
 import useLocalStore from "../hooks/localstore";
 
+import user_img3 from "../images/user3.png";
+import user_img4 from "../images/user4.png";
+
 export default function dashboard() {
   const [id, setId] = useLocalStore("id");
-  const CONVERSATION_KEY = "conversations";
+  // const CONVERSATION_KEY = "conversations";
   const [modalOpen, setModalOpen] = useState(false);
-  const [activeKey, setActivekey] = useState(CONVERSATION_KEY);
+  // const [activeKey, setActivekey] = useState(CONVERSATION_KEY);
   const idRef = useRef();
   const nameRef = useRef();
   const { contacts = [], createContact } = useContacts();
-  const conversationsOpen = activeKey === CONVERSATION_KEY;
+  // const conversationsOpen = activeKey === CONVERSATION_KEY;
   const [selectedCont, selectContact] = useState(null);
   const { conversations, createConversation, addMessageToConversation } =
     useConversation();
 
   const [message, setMessage] = useState("");
   const [socket, setSocket] = useState(null);
-  const username = localStorage.getItem("username");
+  const [username, setUsername] = useState("");
+
+  useEffect(() => {
+    const storedUsername = localStorage.getItem("username");
+    if (storedUsername) setUsername(storedUsername);
+  }, []);
+
+  useEffect(() => {
+    if (!id) return;
+    const socketIo = io("http://localhost:5000", {
+      query: { id: id },
+    });
+    setSocket(socketIo);
+
+    socketIo.on("recive-message", ({ recipients, sender, text }) => {
+      console.log("Received message:", { sender, text });
+      addMessageToConversation(sender, text, sender);
+    });
+
+    return () => socketIo.disconnect();
+  }, [id]);
 
   const selectedConversation = useMemo(() => {
     return conversations.find((conv) =>
@@ -105,21 +129,6 @@ export default function dashboard() {
   }, []);
 
   useEffect(() => {
-    if (!id) return;
-    const socketIo = io("http://localhost:5000", {
-      query: { id: id },
-    });
-    setSocket(socketIo);
-
-    socketIo.on("recive-message", ({ recipients, sender, text }) => {
-      console.log("Received message:", { sender, text });
-      addMessageToConversation(sender, text, sender);
-    });
-
-    return () => socketIo.disconnect();
-  }, [id]);
-
-  useEffect(() => {
     console.log("Selected Contact updated:", selectedCont);
     console.log("Conv: " + selectedConversation);
   }, [selectedCont, selectedConversation]);
@@ -128,11 +137,16 @@ export default function dashboard() {
     <div className="dashboard">
       <div className="flex h-screen bg-gray-100">
         {/* Sidebar */}
-        <aside className="w-1/4 bg-gray-900 text-white flex flex-col">
+        <aside className="w-1/4 bg-gray-900 text-white flex flex-col rounded-r-2xl">
           <div className="flex items-center justify-between px-4 py-3 border-b border-gray-700">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 bg-gray-700 rounded-full">
-                {ToolTipMenu({ id: id, username: username })}
+              <div className="w-10 h-10 bg-gray-700 rounded-full flex items-center justify-center cursor-pointer">
+                <ToolTipMenu id={id} username={username} />
+                <Image
+                  className="flex w-8 h-8 rounded-full"
+                  src={user_img3}
+                  alt="Avatar"
+                />
               </div>
               <h1 className="text-lg font-bold">Chats</h1>
             </div>
@@ -167,10 +181,16 @@ export default function dashboard() {
                     selectedCont === contact.id ? "bg-gray-800" : ""
                   }`}
                 >
-                  <div className="w-10 h-10 bg-gray-700 rounded-full mr-3"></div>
+                  <div className="flex flex-shrink-0 w-10 h-10 bg-gray-700 items-center justify-center rounded-full mr-3">
+                    <Image
+                      className="flex w-8 h-8 rounded-full"
+                      src={user_img4}
+                      alt="Avatar"
+                    />
+                  </div>
                   <div className="flex-1">
                     <h3 className="text-sm font-medium">{contact.name}</h3>
-                    <p className="text-xs text-gray-400 truncate">
+                    <p className="text-xs text-gray-400 truncate overflow-hidden text-ellipsis w-64">
                       {lastMessagePreview}
                     </p>
                   </div>
@@ -181,7 +201,7 @@ export default function dashboard() {
         </aside>
 
         {/* Chat Window */}
-        <main className="flex-1 flex flex-col bg-white">
+        <main className="flex-1 flex flex-col bg-white ">
           <div className="flex items-center justify-between px-4 py-3 border-b">
             <h2 className="font-medium">
               {selectedConversation
@@ -191,6 +211,13 @@ export default function dashboard() {
             <button className="text-gray-400 hover:text-gray-600">⋮</button>
           </div>
           <div className="flex-1 overflow-y-auto p-4">
+            {!selectedConversation && (
+              <div className="flex items-center justify-center h-full">
+                <p className="text-gray-500">
+                  Please select a contact to start chatting.
+                </p>
+              </div>
+            )}
             {selectedConversation?.messages?.map((msg, index) => (
               <div
                 key={index}

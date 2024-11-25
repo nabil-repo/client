@@ -3,7 +3,6 @@ import useLocalStore from "../hooks/localstore";
 import { useConversation } from "./conversationProvider";
 //const { conversations, createConversation, addMessageToConversation } = useConversation();
 
-
 const ContactsContext = createContext();
 
 export function useContacts() {
@@ -13,16 +12,6 @@ export function useContacts() {
 export function ContactsProvider({ children }) {
   const [contacts, setContacts] = useLocalStore("contacts", []);
 
-  // React.useEffect(() => {
-  //   const aiContact = { id: "chatgpt", name: "ChatGPT Bot" };
-  //   const chatBotAdded = localStorage.getItem("chatbot-added");
-
-  //   if (!chatBotAdded) {
-  //     setContacts((prevContacts) => [...prevContacts, aiContact]);
-  //     createConversation(aiContact);
-  //     localStorage.setItem("chatbot-added", "true");
-  //   }
-  // }, [setContacts]);
 
   function createContact(id, name) {
     setContacts((prevContacts) => [...prevContacts, { id, name }]);

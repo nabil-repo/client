@@ -1,4 +1,3 @@
-
 import React, { createContext, useContext, useState, useMemo } from "react";
 import useLocalStore from "../hooks/localstore"; // Custom hook to manage local storage
 import { useContacts } from "./contacts";
@@ -45,7 +44,11 @@ export function ConversationProvider({ children }) {
       });
 
       // If conversation doesn't exist, create a new one
-      if (!newConversations.some((conv) => conv.recipients.some((c) => c.id === contact.id))) {
+      if (
+        !newConversations.some((conv) =>
+          conv.recipients.some((c) => c.id === contact.id)
+        )
+      ) {
         newConversations.push({
           recipients: [{ id: contact.id, name: contact.name }],
           messages: [{ sender, message, timestamp: new Date().toISOString() }],

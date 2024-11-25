@@ -24,10 +24,10 @@ export default function TooltipMenu(data) {
   }, []);
 
   return (
-    <div className="relative" ref={menuRef}>
+    <div className="absolute" ref={menuRef}>
       {/* Trigger div (circle) */}
       <div
-        className="w-10 h-10 bg-gray-700 rounded-full flex items-center justify-center cursor-pointer"
+        className="w-10 h-10"
         onClick={toggleMenu}
       >
         <span className="text-white"></span> {/* Optional icon */}
