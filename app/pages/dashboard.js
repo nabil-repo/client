@@ -8,6 +8,7 @@ import useLocalStore from "../hooks/localstore";
 
 import user_img3 from "../images/user3.png";
 import user_img4 from "../images/user4.png";
+const API_URL = process.env.ENDPOINT;
 
 export default function dashboard() {
   const [id, setId] = useLocalStore("id");
@@ -33,7 +34,7 @@ export default function dashboard() {
 
   useEffect(() => {
     if (!id) return;
-    const socketIo = io("http://localhost:5000", {
+    const socketIo = io(API_URL, {
       query: { id: id },
     });
     setSocket(socketIo);
@@ -91,7 +92,7 @@ export default function dashboard() {
         })) || [];
 
       setTimeout(() => {
-        fetch("http://localhost:5000/api/chatbot", {
+        fetch(API_URL+"/api/chatbot", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ message, history: conversationHistory }),

@@ -1,4 +1,4 @@
-require("dotenv").config();
+
 const express = require("express");
 const http = require("http");
 const mongoose = require("mongoose");
@@ -8,11 +8,17 @@ const OpenAI = require("openai");
 const bodyParser = require("body-parser");
 const bcrypt = require("bcrypt");
 
+require("dotenv").config();
+
 const app = express();
 const server = http.createServer(app);
+
+
+const endpoint = process.env.ENDPONIT;
+
 const io = socketIo(server, {
   cors: {
-    origin: "http://localhost:3000",
+    origin: endpoint,
     methods: ["GET", "POST"],
     credentials: true,
   },
@@ -24,7 +30,7 @@ app.use(express.json());
 app.use(bodyParser.json());
 
 const openai = new OpenAI({
-  apiKey: "pk-wJYNiXMGSFZNVIUTgmQzpYvnGmrLHmrrZFoDpJMMUzudfSWz",
+  apiKey: process.env.MY_KEY,
   baseURL: " https://api.pawan.krd/cosmosrp/v1",
 });
 
@@ -74,7 +80,7 @@ app.post("/api/chatbot", async (req, res) => {
 
 mongoose
   .connect(
-    "mongodb+srv://nabilaaaman:nabilaman@cluster0.wydqa.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0",
+    process.env.MONGO_URI,
     { useNewUrlParser: true, useUnifiedTopology: true }
   )
   .then(() => console.log("MongoDB connected"))
@@ -148,7 +154,9 @@ app.post("/api/users/validate", async (req, res) => {
   }
 });
 
+
+
 const PORT = process.env.PORT || 5000;
 server.listen(PORT, () =>
-  console.log(`Server running on http://localhost:${PORT}`)
+  console.log(`Server running on ${endpoint}:${PORT}`)
 );
