@@ -1,4 +1,3 @@
-
 const express = require("express");
 const http = require("http");
 const mongoose = require("mongoose");
@@ -13,8 +12,7 @@ require("dotenv").config();
 const app = express();
 const server = http.createServer(app);
 
-
-const endpoint = process.env.ENDPOINT;
+let endpoint = process.env.ENDPOINT;
 
 const io = socketIo(server, {
   cors: {
@@ -79,10 +77,10 @@ app.post("/api/chatbot", async (req, res) => {
 //Mongo
 
 mongoose
-  .connect(
-    process.env.MONGO_URI,
-    { useNewUrlParser: true, useUnifiedTopology: true }
-  )
+  .connect(process.env.MONGO_URI, {
+    useNewUrlParser: true,
+    useUnifiedTopology: true,
+  })
   .then(() => console.log("MongoDB connected"))
   .catch((err) => console.error(err));
 
@@ -154,9 +152,5 @@ app.post("/api/users/validate", async (req, res) => {
   }
 });
 
-
-
 const PORT = process.env.PORT || 5000;
-server.listen(PORT, () =>
-  console.log(`Server running on ${endpoint}:${PORT}`)
-);
+server.listen(PORT, () => console.log(`Server running on ${endpoint}:${PORT}`));
