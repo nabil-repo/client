@@ -99,6 +99,8 @@ import axios from "axios";
 import { v4 as uuid } from "uuid";
 import useLocalStore from "../hooks/localstore";
 
+const API_URL = process.env.ENDPOINT;
+
 export default function Login({ onIdSubmit }) {
   const idRef = useRef();
 
@@ -131,10 +133,10 @@ export default function Login({ onIdSubmit }) {
     }
 
     try {
-      const response = await axios.post(
-        "http://localhost:5000/api/users/validate",
-        { username, password }
-      );
+      const response = await axios.post(API_URL + "/api/users/validate", {
+        username,
+        password,
+      });
 
       if (response.data.user) {
         openModal("info", `Welcome back, ${response.data.user.username}`);
@@ -163,7 +165,7 @@ export default function Login({ onIdSubmit }) {
     const id = uuid();
 
     try {
-      await axios.post("http://localhost:5000/api/users/create", {
+      await axios.post(API_URL+"/api/users/create", {
         id,
         username,
         password,
