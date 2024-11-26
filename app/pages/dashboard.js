@@ -8,8 +8,9 @@ import useLocalStore from "../hooks/localstore";
 
 import user_img3 from "../images/user3.png";
 import user_img4 from "../images/user4.png";
-// const API_URL = process.env.ENDPOINT;
-const API_URL = "https://chattingapp-bice.vercel.app";
+//const API_URL = process.env.ENDPOINT;
+
+const API_URL ="https://chatting-app-server-peach.vercel.app";
 
 export default function dashboard() {
   const [id, setId] = useLocalStore("id");
@@ -93,7 +94,7 @@ export default function dashboard() {
         })) || [];
 
       setTimeout(() => {
-        fetch(API_URL+"/api/chatbot", {
+        fetch(API_URL + "/api/chatbot", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ message, history: conversationHistory }),

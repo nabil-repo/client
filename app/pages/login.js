@@ -13,7 +13,8 @@ export default function Login({ onIdSubmit }) {
   const [password, setPassword] = useState("");
   const dotenv = require("dotenv");
 
-  const API_URL = "https://chattingapp-bice.vercel.app";
+  const API_URL ="https://chatting-app-server-peach.vercel.app";
+  //const API_URL = process.env.ENDPOINT;
 
   const openModal = (type, message = "") => {
     setModalType(type);
@@ -36,7 +37,7 @@ export default function Login({ onIdSubmit }) {
       openModal("error", "Please enter both username and password.");
       return;
     }
-    console.log(API_URL)
+    //console.log(API_URL);
 
     try {
       const response = await axios.post(API_URL + "/api/users/validate", {
