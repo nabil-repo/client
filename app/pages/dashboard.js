@@ -10,7 +10,7 @@ import user_img3 from "../images/user3.png";
 import user_img4 from "../images/user4.png";
 //const API_URL = process.env.ENDPOINT;
 
-const API_URL ="https://chatting-app-server-peach.vercel.app";
+const API_URL ="https://chatting-app-server-9v6p.onrender.com";
 
 export default function dashboard() {
   const [id, setId] = useLocalStore("id");

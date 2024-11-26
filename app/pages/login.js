@@ -13,7 +13,7 @@ export default function Login({ onIdSubmit }) {
   const [password, setPassword] = useState("");
   const dotenv = require("dotenv");
 
-  const API_URL ="https://chatting-app-server-peach.vercel.app";
+  const API_URL ="https://chatting-app-server-9v6p.onrender.com";
   //const API_URL = process.env.ENDPOINT;
 
   const openModal = (type, message = "") => {
